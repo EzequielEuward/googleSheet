@@ -1,0 +1,216 @@
+function HolaMundo() {
+  let service = SpreadsheetApp;
+  let archivo = service.getActiveSpreadsheet();
+  let hoja = archivo.getActiveSheet();
+  let renge = hoja.getRange('B2:B80').setValue("Hola mundo")
+}
+
+function onCopy() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let origin = archive.getSheetByName('base'); // Hoja origen
+  let targetSheet = archive.getSheetByName('Hoja 1'); // Hoja destino
+
+  // Configurar la copia desde la hoja 'base'
+  let startRowOrigin = 3; // Comienza desde la fila 3 en 'base'
+  let startColumnOrigin = 5; // Columna E en 'base' (índice 5)
+  let numRows = origin.getLastRow() - startRowOrigin + 1; // Número de filas a copiar
+  let numColumns = 3; // Número de columnas a copiar (E, F, G)
+
+  // Obtener los datos de la hoja origen
+  let dataToCopy = origin.getRange(startRowOrigin, startColumnOrigin, numRows, numColumns).getValues();
+
+  // Definir dónde pegar los datos en la hoja 'Hoja 1'
+  let startRowTarget = 2; // Comienza desde la fila 2 en 'Hoja 1'
+  let startColumnTarget = 2; // Columna B en 'Hoja 1'
+
+  // Pegar los datos
+  targetSheet.getRange(startRowTarget, startColumnTarget, numRows, numColumns).setValues(dataToCopy);
+
+  Logger.log("Copia completada de 'base' a 'Hoja 1'.");
+}
+
+
+
+//Ejercicios creados con la hoja 3
+function onCopyHoja3() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let origen = archive.getSheetByName('base');
+  let targetSheetHoja3 = archive.getSheetByName('Hoja 3');
+  //let targetSheetHoja1 =  archive.getSheetByName('Hoja 1');
+
+  let startRow = 3;
+  let startColumn = 5;
+
+  let numRow = 28;
+  //let numRow = origen.getLastRow() - startRow + 1; 
+  let numColumns = 1;
+
+  let dataToCopy = origen.getRange(startRow, startColumn, numRow).getValues();
+
+
+  //El 2 es el numerito de la columna a la que quiero copiar osea la de destinatario, la que se va a mandar todo
+  targetSheetHoja3.getRange(startRow, 2, numRow, numColumns).setValues(dataToCopy);
+
+
+  Logger.log("Se copio completamente la localidad de la IG a Hoja 3")
+
+
+}
+
+function onCopyAndOrder() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let origen = archive.getSheetByName('Hoja 1'); // Hoja de origen
+  let destino = archive.getSheetByName('Hoja 3'); // Hoja de destino
+  let backup = archive.getSheetByName('base'); // Hoja de respaldo
+
+  let startRow, startColumn;
+  let numRow = 29; // Número de filas a copiar
+  let numColumns = 1; // Número de columnas a copiar
+
+  // Verificar si 'Hoja 1' está vacía en la columna 3 (rango de filas desde la 2 hasta la 29)
+  let isHoja1Empty = origen.getRange(2, 3, numRow, numColumns).isBlank();
+
+  if (isHoja1Empty) {
+    // Si 'Hoja 1' está vacía, copiar desde la hoja 'base'
+    startRow = 3;  // Fila 3 en 'base'
+    startColumn = 6; // Columna 5 en 'base' (esto es para tomar los datos desde 'base')
+    Logger.log("Hoja 1 está vacía, copiando desde la hoja base.");
+  } else {
+    // Si 'Hoja 1' no está vacía, copiar desde 'Hoja 1'
+    startRow = 2; // Fila 2 en 'Hoja 1'
+    startColumn = 3; // Columna 3 en 'Hoja 1'
+    Logger.log("Hoja 1 tiene datos, copiando desde Hoja 1.");
+  }
+
+  // Seleccionar el rango de datos dependiendo de si 'Hoja 1' está vacía
+  let dataToCopy;
+  if (isHoja1Empty) {
+    // Si 'Hoja 1' está vacía, copiamos desde 'base'
+    dataToCopy = backup.getRange(startRow, startColumn, numRow, numColumns).getValues();
+  } else {
+    // Si 'Hoja 1' no está vacía, copiamos desde 'Hoja 1'
+    dataToCopy = origen.getRange(startRow, startColumn, numRow, numColumns).getValues();
+  }
+
+  // Pegar los datos en la hoja destino ('Hoja 3') en la columna 3, fila 2
+  destino.getRange(2, 3, numRow, numColumns).setValues(dataToCopy); // Aquí se cambia la columna de destino a 3
+
+  Logger.log(`Se copiaron ${numRow} filas y ${numColumns} columnas desde '${isHoja1Empty ? "base" : "Hoja 1"}' a 'Hoja 3'.`);
+
+  // Ordenar los datos en la columna especificada (columna 3 de 'Hoja 3')
+  let columToSort = 3; // Columna que se va a ordenar
+  let range = destino.getRange(2, columToSort, numRow); // Ordenar desde la fila 2 de la columna 3
+  range.sort({ column: columToSort, ascending: true });
+
+  Logger.log("Se modificó el orden de los clientes.");
+}
+
+
+function borrarDatosColumnas() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = archive.getSheetByName("Hoja 1"); // Nombre de la hoja donde quieres borrar los datos
+
+  // Columna(s) de las que deseas borrar los datos (sin borrar el encabezado)
+  let columnasABorrar = [2, 3, 4]; // Ejemplo: borrar los datos de las columnas 2, 4 y 6 (pero no el encabezado)
+
+  // Obtener la cantidad de filas de la hoja
+  let lastRow = sheet.getLastRow();
+
+  // Borrar los datos de las columnas (pero no el encabezado)
+  for (let i = 0; i < columnasABorrar.length; i++) {
+    let col = columnasABorrar[i];
+    sheet.getRange(2, col, lastRow - 1).clearContent(); // Empieza desde la fila 2 (sin tocar el encabezado)
+  }
+
+  Logger.log("Se borraron los datos de las columnas: " + columnasABorrar.join(", "));
+}
+
+
+function obraActiva() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = archive.getSheetByName('Hoja 3');
+  let sheetHoja1 = archive.getSheetByName('Hoja 1');
+
+  let startRow = 2; // Fila 2 en "Hoja 3"
+  let startColum = 4; // Columna 4 en "Hoja 3"
+  let numRows = sheet.getLastRow() - startRow + 1; // Número de filas a recorrer
+  let copyColumn = 5; // Columna 5 en "Hoja 3"
+
+  // Obtener todos los valores de la columna 4 de "Hoja 3" desde la fila 2
+  let rowValues = sheet.getRange(startRow, startColum, numRows, 1).getValues();
+
+  // Obtener el valor de "Hoja 1", fila 2, columna 5
+  let dataToCopyIfYes = sheetHoja1.getRange(2, 5).getValue();
+
+  // Recorremos todas las filas de "Hoja 3" para verificar el valor de la columna 4
+  for (let i = 0; i < numRows; i++) {
+    if (rowValues[i][0] === 'si') {  // Si el valor de la celda en columna 4 es "si"
+      // Copiar el dato de "Hoja 1" en la columna 5 de la fila correspondiente de "Hoja 3"
+      sheet.getRange(startRow + i, copyColumn).setValue(dataToCopyIfYes);
+    }
+  }
+}
+
+
+function SolicitarAccion() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let origen = archive.getSheetByName('Hoja 1');
+  let destino = archive.getSheetByName('Hoja 3');
+
+  let startRow = 2;
+  let startColum = 6;
+
+  let numRows = origen.getLastRow() - startRow + 1; // Número de filas a copiar
+  let numColumns = 2;
+
+  let dataToCopy = origen.getRange(startRow, startColum, numRows, numColumns).getValues();
+
+  let destinoRows = 2;
+  let destinoColum = 6;
+
+
+  destino.getRange(destinoRows, destinoColum, numRows, numColumns).setValues(dataToCopy);
+
+  Logger.log("Se ha terminado la accion");
+}
+
+
+function SumaDePresupuesto() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = archive.getSheetByName("Hoja 3");
+
+  let startRow = 2;
+  let startColum = 9;
+
+  let numColums = 2;
+  let numRows = sheet.getLastRow() - startRow + 1;
+
+
+  let Presupuesto = sheet.getRange(startRow, startColum, numRows, numColums).getValues();
+  let sumas = [];
+  let divisiones = [];
+
+  // Recorrer el arreglo y sumar los valores
+  for (let i = 0; i < Presupuesto.length; i++) {
+    let suma = Presupuesto[i][0] + Presupuesto[i][1]; // Suma los valores de las columnas 9 y 10 de cada fila
+    let division = Presupuesto[i][0] / Presupuesto[i][1] *24*12 -100
+    sumas.push([suma])
+    divisiones.push([division])
+  }
+
+  sheet.getRange(startRow, startColum + 2, numRows, 1).setValues(sumas);
+  sheet.getRange(startRow, startColum + 3, numRows, 1).setValues(divisiones);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
