@@ -7,28 +7,39 @@ function HolaMundo() {
 
 function onCopy() {
   let archive = SpreadsheetApp.getActiveSpreadsheet();
-  let origin = archive.getSheetByName('base'); // Hoja origen
+  let baseSheet = archive.getSheetByName('base'); // Hoja base
   let targetSheet = archive.getSheetByName('Hoja 1'); // Hoja destino
 
-  // Configurar la copia desde la hoja 'base'
-  let startRowOrigin = 3; // Comienza desde la fila 3 en 'base'
-  let startColumnOrigin = 5; // Columna E en 'base' (índice 5)
-  let numRows = origin.getLastRow() - startRowOrigin + 1; // Número de filas a copiar
-  let numColumns = 3; // Número de columnas a copiar (E, F, G)
+  // Obtener datos de la columna A en 'Hoja 1' (clientes)
+  let clientData = targetSheet.getRange(2, 1, targetSheet.getLastRow() - 1, 1).getValues();
 
-  // Obtener los datos de la hoja origen
-  let dataToCopy = origin.getRange(startRowOrigin, startColumnOrigin, numRows, numColumns).getValues();
+  // Obtener datos completos de la hoja 'base'
+  let baseData = baseSheet.getDataRange().getValues();
 
-  // Definir dónde pegar los datos en la hoja 'Hoja 1'
-  let startRowTarget = 2; // Comienza desde la fila 2 en 'Hoja 1'
-  let startColumnTarget = 2; // Columna B en 'Hoja 1'
+  // Crear un mapa para buscar en la hoja 'base'
+  let baseMap = {};
+  baseData.forEach(row => {
+    let clientKey = row[0]; // Columna A en 'base' (índice del cliente)
+    baseMap[clientKey] = row.slice(4, 7); // Columnas E, F, G en 'base' (datos asociados)
+  });
 
-  // Pegar los datos
-  targetSheet.getRange(startRowTarget, startColumnTarget, numRows, numColumns).setValues(dataToCopy);
+  // Construir los datos a copiar a 'Hoja 1'
+  let resultData = clientData.map(clientRow => {
+    let clientKey = clientRow[0]; // Cliente actual
+    if (clientKey && baseMap[clientKey]) {
+      return baseMap[clientKey]; // Datos asociados si existe coincidencia
+    } else {
+      return ['', '', '']; // Dejar vacío si no hay coincidencia
+    }
+  });
 
-  Logger.log("Copia completada de 'base' a 'Hoja 1'.");
+  // Pegar los datos en 'Hoja 1' (columnas B, C, D)
+  targetSheet
+    .getRange(2, 2, resultData.length, 3) // Desde la fila 2, columna B, 3 columnas
+    .setValues(resultData);
+
+  Logger.log("Datos copiados con coincidencias desde 'base' a 'Hoja 1'.");
 }
-
 
 
 //Ejercicios creados con la hoja 3
@@ -193,7 +204,7 @@ function SumaDePresupuesto() {
   // Recorrer el arreglo y sumar los valores
   for (let i = 0; i < Presupuesto.length; i++) {
     let suma = Presupuesto[i][0] + Presupuesto[i][1]; // Suma los valores de las columnas 9 y 10 de cada fila
-    let division = Presupuesto[i][0] / Presupuesto[i][1] *24*12 -100
+    let division = Presupuesto[i][0] / Presupuesto[i][1] * 24 * 12 - 100
     sumas.push([suma])
     divisiones.push([division])
   }
@@ -201,6 +212,72 @@ function SumaDePresupuesto() {
   sheet.getRange(startRow, startColum + 2, numRows, 1).setValues(sumas);
   sheet.getRange(startRow, startColum + 3, numRows, 1).setValues(divisiones);
 }
+
+
+
+function copiarTodo() {
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let origin = archive.getSheetByName('Hoja 1');
+  let destino = archive.getSheetByName('Hoja 4');
+
+  let startRow = 1;
+  let startColum = 1;
+
+  let numRows = origin.getLastRow() - startRow + 1;
+  let numColumns = origin.getLastRow() - startColum + 1;
+
+  let dataToCopy = origin.getRange(startRow, startColum, numRows, numColumns)
+
+  dataToCopy.copyTo(destino.getRange(startColum, startRow));
+
+}
+
+
+function copiarDatos() {
+  // Obtener la hoja activa y las hojas específicas
+  let archivo = SpreadsheetApp.getActiveSpreadsheet();
+  let hojaBase = archivo.getSheetByName('base'); // Hoja origen
+  let hojaDestino = archivo.getSheetByName('Hoja 1'); // Hoja destino
+
+  // Obtener los datos de la columna A (clientes) desde la fila 2 en 'Hoja 1'
+  let filaInicioDestino = 2; // Comienza en la fila 2
+  let datosClientes = hojaDestino
+    .getRange(filaInicioDestino, 1, hojaDestino.getLastRow() - filaInicioDestino + 1, 1)
+    .getValues();
+
+  // Obtener todos los datos de 'base' y saltar las dos primeras filas
+  let datosBase = hojaBase.getDataRange().getValues();
+  let mapaBase = {}; // Mapa para buscar coincidencias
+
+  // Crear el mapa de búsqueda a partir de los datos de 'base'
+  datosBase.slice(2).forEach(fila => {
+    let clienteClave = fila[0]; // Columna A (clave primaria)
+    if (clienteClave) {
+      mapaBase[clienteClave] = fila.slice(4, 7); // Columnas E, F, G
+    }
+  });
+
+  // Construir los datos que se copiarán a 'Hoja 1'
+  let datosResultado = datosClientes.map(filaCliente => {
+    let clienteClave = filaCliente[0]; // Clave actual del cliente
+    if (clienteClave && mapaBase[clienteClave]) {
+      return mapaBase[clienteClave]; // Datos asociados si hay coincidencia
+    } else {
+      return ['', '', '']; // Vacío si no hay coincidencia
+    }
+  });
+
+  // Pegar los datos en las columnas B, C, D de 'Hoja 1'
+  hojaDestino
+    .getRange(filaInicioDestino, 2, datosResultado.length, 3) // Desde la fila 2, columna B
+    .setValues(datosResultado);
+
+  Logger.log("Datos copiados con éxito.");
+}
+
+
+
+
 
 
 
