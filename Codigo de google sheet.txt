@@ -233,48 +233,43 @@ function copiarTodo() {
 }
 
 
-function copiarDatos() {
-  // Obtener la hoja activa y las hojas específicas
-  let archivo = SpreadsheetApp.getActiveSpreadsheet();
-  let hojaBase = archivo.getSheetByName('base'); // Hoja origen
-  let hojaDestino = archivo.getSheetByName('Hoja 1'); // Hoja destino
+function copiarOtrosDatos() {
+  // Entro al archivo y elijo las dos tablas que tengo que usar 
+  let archive = SpreadsheetApp.getActiveSpreadsheet();
+  let sheetOrigen = archive.getSheetByName('Hoja 1');
+  let sheetDestino = archive.getSheetByName('Hoja 4');
 
-  // Obtener los datos de la columna A (clientes) desde la fila 2 en 'Hoja 1'
-  let filaInicioDestino = 2; // Comienza en la fila 2
-  let datosClientes = hojaDestino
-    .getRange(filaInicioDestino, 1, hojaDestino.getLastRow() - filaInicioDestino + 1, 1)
-    .getValues();
+  // Inicializo valores
+  let startRow = 2;
+  let startColum = 1;
 
-  // Obtener todos los datos de 'base' y saltar las dos primeras filas
-  let datosBase = hojaBase.getDataRange().getValues();
-  let mapaBase = {}; // Mapa para buscar coincidencias
+  // Tomo todos los valores de la tabla de la Hoja 1
+  let baseData = sheetOrigen.getDataRange().getValues();
 
-  // Crear el mapa de búsqueda a partir de los datos de 'base'
-  datosBase.slice(2).forEach(fila => {
-    let clienteClave = fila[0]; // Columna A (clave primaria)
-    if (clienteClave) {
-      mapaBase[clienteClave] = fila.slice(4, 7); // Columnas E, F, G
-    }
+  // Selecciono la primera columna de la tabla en la Hoja 4 (índices)
+  let dataToCopy = sheetDestino.getRange(startRow, startColum, sheetDestino.getLastRow() - 1, 1).getValues();
+
+  // Crear un mapa con los datos de 'Hoja 1' (columnas B, C, D, F)
+  let baseMapa = {};
+  baseData.forEach(row => {
+    let clienteKey = row[0]; // Tomo el índice del cliente (columna A)
+    // Aquí incluimos las columnas B, C, D y F (índices 1, 2, 3, 5)
+    baseMapa[clienteKey] = [row[1], row[2], row[3], row[5]];
   });
 
-  // Construir los datos que se copiarán a 'Hoja 1'
-  let datosResultado = datosClientes.map(filaCliente => {
-    let clienteClave = filaCliente[0]; // Clave actual del cliente
-    if (clienteClave && mapaBase[clienteClave]) {
-      return mapaBase[clienteClave]; // Datos asociados si hay coincidencia
+  // Ahora mapeo los datos que quiero copiar a 'Hoja 4'
+  let resultData = dataToCopy.map(clienteRow => {
+    let clienteKey = clienteRow[0]; // Cliente actual
+    if (clienteKey && baseMapa[clienteKey]) {
+      return baseMapa[clienteKey]; // Devuelvo las columnas B, C, D, F si existe coincidencia
     } else {
-      return ['', '', '']; // Vacío si no hay coincidencia
+      return ['', '', '', '']; // Si no hay coincidencia, devuelvo columnas vacías
     }
   });
 
-  // Pegar los datos en las columnas B, C, D de 'Hoja 1'
-  hojaDestino
-    .getRange(filaInicioDestino, 2, datosResultado.length, 3) // Desde la fila 2, columna B
-    .setValues(datosResultado);
-
-  Logger.log("Datos copiados con éxito.");
+  // Pegar los datos en 'Hoja 4', empezando en la fila 2, columna B
+  sheetDestino.getRange(startRow, 2, resultData.length, 4).setValues(resultData);
 }
-
 
 
 
